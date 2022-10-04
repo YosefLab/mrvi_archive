@@ -1,0 +1,8 @@
+channels:
+    - conda-forge
+dependencies:
+    - python=3.8
+    - pytorch=1.11.0
+    - pip:
+          - scanpy==1.9.1
+          - scikit-misc==0.1.4

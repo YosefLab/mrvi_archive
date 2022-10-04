@@ -1,0 +1,59 @@
+synthetic:
+    s3FilePath: largedonor/symsim_new.h5ad
+    nReplicates: 5
+    randomSeed: 123
+    nEpochs: 400
+    batchSize: 256
+    keyMapping:
+        donorKey: donor
+        cellTypeKey: celltype
+        nuisanceKeys:
+            - batch
+        relevantKeys:
+            - batch
+            - donor_meta_1
+            - donor_meta_2
+            - donor_meta_3
+
+semisynthetic:
+    origFilePath: None
+    nEpochs: 400
+    batchSize: 256
+    s3FilePath: largedonor/scvi_pbmcs.h5ad
+    keyMapping:
+        donorKey: batch
+        cellTypeKey: str_labels
+        nuisanceKeys:
+            - Site
+        relevantKeys:
+            - Site
+            - tree_id1_0
+            - tree_id1_1
+            - tree_id1_2
+            - tree_id1_3
+            - tree_id1_4
+            - tree_id2_0
+            - tree_id2_1
+            - tree_id2_2
+            - tree_id2_3
+            - tree_id2_4
+
+snrna:
+    origFilePath: SCP259
+    s3FilePath: largedonor/nucleus.h5ad
+    nEpochs: 300
+    batchSize: 256
+    preprocessing:
+        filter_genes:
+            min_cells: 500
+        highly_variable_genes:
+            n_top_genes: 3000
+            flavor: seurat_v3
+    keyMapping:
+        donorKey: library_uuid
+        cellTypeKey: cell_type
+        nuisanceKeys:
+            - suspension_type
+        relevantKeys:
+            - library_uuid
+            - suspension_type

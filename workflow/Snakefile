@@ -1,0 +1,117 @@
+configfile: "config/config.yaml"
+
+MODELS = [
+    "MrVISmall",
+    "MrVILinear",
+    "MrVILinear50",
+    "MrVILinear50COMP",
+    "MrVILinear10COMP",
+    "MrVILinearLinear10COMP",
+    "MrVILinearLinear10",
+    "MrVILinearLinear10SCALER",
+    "MILO",
+    "MILOSCVI",
+    "PCAKNN",
+    "CompositionPCA",
+    "CompositionSCVI",
+    "SCVI",
+]
+
+import random
+
+def get_n_replicates(dataset):
+    dataset_config = config[dataset]
+    n_replicates = dataset_config["nReplicates"] if "nReplicates" in dataset_config else 1
+    return n_replicates
+
+def get_random_seeds(dataset, n_models):
+    dataset_config = config[dataset]
+    n_replicates = dataset_config["nReplicates"] if "nReplicates" in dataset_config else 1
+    random_seed = dataset_config["randomSeed"] if "randomSeed" in dataset_config else 1
+    random.seed(random_seed)
+    rep_random_seeds = [random.randint(0, 2**32) for _ in range(n_replicates * n_models)]
+    return rep_random_seeds
+
+rule all:
+    input:
+        "results/synthetic_experiment.done",
+        "results/semisynthetic_experiment.done",
+        "results/snrna_experiment.done",
+
+rule synthetic_experiment:
+    output: touch("results/synthetic_experiment.done")
+    input:
+        expand(
+            "results/synthetic/final_adata_{model}_{seed}.h5ad",
+            zip,
+            model=MODELS * get_n_replicates("synthetic"),
+            seed=get_random_seeds("synthetic", len(MODELS)),
+        )
+
+rule semisynthetic_experiment:
+    output: touch("results/semisynthetic_experiment.done")
+    input:
+        expand(
+            "results/semisynthetic/final_adata_{model}_{seed}.h5ad",
+            zip,
+            model=MODELS * get_n_replicates("semisynthetic"),
+            seed=get_random_seeds("semisynthetic", len(MODELS)),
+        ),
+
+rule snrna_experiment:
+    output: touch("results/snrna_experiment.done")
+    input:
+        expand(
+            "results/snrna/final_adata_{model}_{seed}.h5ad",
+            zip,
+            model=MODELS * get_n_replicates("snrna"),
+            seed=get_random_seeds("snrna", len(MODELS)),
+        )
+
+
+def get_s3_dataset_path(wildcards):
+    return config[wildcards.dataset]["s3FilePath"]
+
+rule load_dataset_from_s3:
+    params: get_s3_dataset_path
+    output: "data/{dataset,[A-Za-z0-9]+}/adata.h5ad"
+    shell:
+        "aws s3 cp s3://{params} {output}"
+
+rule process_dataset:
+    input:
+        "data/{dataset}/adata.h5ad"
+    output:
+        "data/{dataset,[A-Za-z0-9]+}/adata.processed.h5ad",
+    conda:
+        "envs/process_data.yaml"
+    script:
+        "scripts/process_data.py"
+
+rule run_model:
+    input:
+        "data/{dataset}/adata.processed.h5ad",
+    output:
+        "results/{dataset}/adata_{model,[A-Za-z0-9]+}_{seed, \d+}.h5ad"
+    threads: 
+        8
+    log:
+        "logs/{dataset}_{model}_{seed}.log"
+    conda:
+        "envs/run_model.yaml"
+    resources:
+        nvidia_gpu=1
+    script:
+        "scripts/run_model.py"
+
+rule compute_local_scores:
+    input:
+        "results/{dataset}/adata_{model}_{seed}.h5ad"
+    output:
+        "results/{dataset}/final_adata_{model,[A-Za-z0-9]+}_{seed, \d+}.h5ad"
+    threads: 
+        8
+    conda:
+        "envs/run_model.yaml"
+    script:
+        "scripts/compute_local_scores.py"
