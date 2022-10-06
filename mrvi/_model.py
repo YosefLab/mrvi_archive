@@ -64,7 +64,6 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         library_log_means, library_log_vars = _init_library_size(
             self.adata_manager, n_batch
         )
-        # n_obs_per_batch = adata.obs.groupby(self.adata_manager.get_state_registry("batch")["original_key"]).size()
         n_obs_per_batch = (
             adata.obs.groupby(
                 self.adata_manager.get_state_registry("batch")["original_key"]
@@ -192,7 +191,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         return cf_degs
 
     @torch.no_grad()
-    def get_local_donor_representation(
+    def get_local_sample_representation(
         self,
         adata=None,
         batch_size=256,
@@ -202,8 +201,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         x_dim=50,
         eps=1e-6,
     ):
-        """Computes the local donor representation of the cells in the adata object.
-        For each cell, it returns a matrix of size (n_donors, n_features)
+        """Computes the local sample representation of the cells in the adata object.
+        For each cell, it returns a matrix of size (n_samples, n_features)
         """
         adata = self.adata if adata is None else adata
         self._check_if_trained(warn=False)
@@ -258,6 +257,6 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
             xs = torch.cat(xs, 2).mean(0)
             reps.append(xs.cpu().numpy())
-        # n_cells, n_donors, n_donors
+        # n_cells, n_samples, n_latent
         reps = np.concatenate(reps, 0)
         return reps

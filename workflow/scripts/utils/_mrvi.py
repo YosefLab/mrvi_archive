@@ -156,8 +156,8 @@ class MrVIWrapper(BaseModelClass):
         return reps
 
     @torch.no_grad()
-    def get_local_donor_representation(self, adata=None, **kwargs):
-        return self.model.get_local_donor_representation(adata=adata, **kwargs)
+    def get_local_sample_representation(self, adata=None, **kwargs):
+        return self.model.get_local_sample_representation(adata=adata, **kwargs)
 
     def get_donor_representation_metadata(self):
         return (
