@@ -26,6 +26,8 @@ adata.obsm["X_mrvi_z"] = mrvi_model.get_latent_representation(give_z=True)
 adata.obsm["X_mrvi_u"] = mrvi_model.get_latent_representation(give_z=False)
 # Cells by n_samples by n_latent
 cell_sample_representations = mrvi_model.get_local_sample_representation()
+# Cells by n_samples by n_samples
+cell_sample_sample_distances = mrvi_model.get_local_sample_representation(return_distances=True)
 ```
 
 ## Citation
