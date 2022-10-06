@@ -65,7 +65,6 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         library_log_means, library_log_vars = _init_library_size(
             self.adata_manager, n_batch
         )
-        # n_obs_per_batch = adata.obs.groupby(self.adata_manager.get_state_registry("batch")["original_key"]).size()
         n_obs_per_batch = (
             adata.obs.groupby(
                 self.adata_manager.get_state_registry("batch")["original_key"]
@@ -205,7 +204,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         return pairwise_dists
 
     @torch.no_grad()
-    def get_local_donor_representation(
+    def get_local_sample_representation(
         self,
         adata=None,
         batch_size=256,
@@ -216,7 +215,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         eps=1e-6,
         return_distances=False,
     ):
-        """Computes the local donor representation of the cells in the adata object.
+        """Computes the local sample representation of the cells in the adata object.
         For each cell, it returns a matrix of size (n_donors, n_features)
 
         If ``return_distances`` is ``True``, returns a distance matrix of
@@ -275,7 +274,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
             xs = torch.cat(xs, 2).mean(0)
             reps.append(xs.cpu().numpy())
-        # n_cells, n_donors, n_donors
+        # n_cells, n_samples, n_latent
         reps = np.concatenate(reps, 0)
 
         if return_distances:
