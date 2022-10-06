@@ -31,8 +31,8 @@ def test_mrvi():
     )
     model.train(1, check_val_every_n_epoch=1, train_size=0.5)
     model.get_latent_representation()
-    assert model.get_local_donor_representation().shape == (adata.shape[0], 15, 10)
-    assert model.get_local_donor_representation(return_distances=True).shape == (
+    assert model.get_local_sample_representation().shape == (adata.shape[0], 15, 10)
+    assert model.get_local_sample_representation(return_distances=True).shape == (
         adata.shape[0],
         15,
         15,
