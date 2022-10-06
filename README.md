@@ -17,6 +17,8 @@ import mrvi
 import anndata
 
 adata = anndata.read_h5ad("path/to/adata.h5ad")
+# batch_key represents samples (e.g., donors, perturbations, samples)
+# Sites, plates, other factors should go in categorical_nuisance_keys
 mrvi.MrVI.setup_anndata(adata, batch_key="donor", categorical_nuisance_keys=["site"])
 mrvi_model = mrvi.MrVI(adata)
 mrvi_model.train()
