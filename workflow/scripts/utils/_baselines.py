@@ -67,7 +67,7 @@ class StatifiedPseudoBulkPCA(BaseModelClass):
     def fit(self):
         pass
 
-    def get_local_donor_representation(self, adata=None):
+    def get_local_sample_representation(self, adata=None):
         self.cell_type_key = self.adata.uns["mapper"]["cell_type_key"]
         adata = self.adata
         idx_donor = adata.obs[self.donor_key]
@@ -154,7 +154,7 @@ class CompositionBaseline(BaseModelClass):
         assert adata is None
         return self.adata_.obsm["X_red"]
 
-    def get_local_donor_representation(self, adata=None):
+    def get_local_sample_representation(self, adata=None):
         if self.clustering_on == "leiden":
             sc.pp.neighbors(self.adata_, n_neighbors=30, use_rep="X_red")
             sc.tl.leiden(self.adata_, resolution=1.0, key_added="leiden_1.0")
@@ -226,7 +226,7 @@ class PCAKNN(BaseModelClass):
         assert adata is None
         return self.adata_.obsm["X_pca"]
 
-    def get_local_donor_representation(self, adata=None):
+    def get_local_sample_representation(self, adata=None):
         # for each cell, compute nearest neighbor in given donor
         pca_rep = self.adata_.obsm["X_pca"]
 
@@ -315,7 +315,7 @@ class SCVIModel(BaseModelClass):
         return self.model.get_latent_representation(adata, batch_size=batch_size)
 
     @torch.no_grad()
-    def get_local_donor_representation(
+    def get_local_sample_representation(
         self, adata=None, batch_size=256, x_dim=50, eps=1e-8, mc_samples=10
     ):
         # z = self.model.get_latent_representation(adata, batch_size=batch_size)

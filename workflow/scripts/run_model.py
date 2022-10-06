@@ -277,7 +277,7 @@ def compute_model_predictions(model_name, path_to_h5ad, path_to_output, random_s
         adata.obsm["{}_cell".format(model_name)] = repb
     if model.has_local_donor_representation:
         _adata = None
-        scores = model.get_local_donor_representation(adata=_adata)
+        scores = model.get_local_sample_representation(adata=_adata)
         adata.uns["{}_local_donor_rep".format(model_name)] = scores
         if hasattr(model, "get_donor_representation_metadata"):
             metadata = model.get_donor_representation_metadata()
