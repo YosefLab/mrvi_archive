@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from sklearn.decomposition import PCA
+from sklearn.metrics import pairwise_distances
 
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
@@ -190,6 +191,18 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         cf_degs = np.concatenate(cf_degs, 0)
         return cf_degs
 
+    @staticmethod
+    def compute_distance_matrix_from_representations(
+        representations: np.ndarray, metric: str = "cosine"
+    ) -> np.ndarray:
+        """Compute distance matrices from representations of shape (n_cells, n_donors, n_features)"""
+        n_cells, n_donors, _ = representations.shape
+        pairwise_dists = np.zeros((n_cells, n_donors, n_donors))
+        for i, cell_rep in enumerate(representations):
+            d_ = pairwise_distances(cell_rep, metric=metric)
+            pairwise_dists[i, :, :] = d_
+        return pairwise_dists
+
     @torch.no_grad()
     def get_local_sample_representation(
         self,
@@ -200,9 +213,13 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         x_log=True,
         x_dim=50,
         eps=1e-6,
+        return_distances=False,
     ):
         """Computes the local sample representation of the cells in the adata object.
-        For each cell, it returns a matrix of size (n_samples, n_features)
+        For each cell, it returns a matrix of size (n_donors, n_features)
+
+        If ``return_distances`` is ``True``, returns a distance matrix of
+        size (n_donors, n_donors) for each cell.
         """
         adata = self.adata if adata is None else adata
         self._check_if_trained(warn=False)
@@ -259,4 +276,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
             reps.append(xs.cpu().numpy())
         # n_cells, n_samples, n_latent
         reps = np.concatenate(reps, 0)
+
+        if return_distances:
+            return self.compute_distance_matrix_from_representations(reps)
+
         return reps
