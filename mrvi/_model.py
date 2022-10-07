@@ -193,7 +193,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
     @staticmethod
     def compute_distance_matrix_from_representations(
-        representations: np.ndarray, metric: str = "cosine"
+        representations: np.ndarray, metric: str = "euclidean"
     ) -> np.ndarray:
         """Compute distance matrices from representations of shape (n_cells, n_donors, n_features)"""
         n_cells, n_donors, _ = representations.shape
