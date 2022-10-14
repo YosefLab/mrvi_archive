@@ -120,7 +120,7 @@ def compute_aggregate_dmat(reps):
 
 
 # %%
-METRIC = "cosine"
+METRIC = "euclidean"
 
 dist_mtxs = defaultdict(list)
 for model_params in MODELS:
