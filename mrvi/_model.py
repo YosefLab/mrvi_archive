@@ -6,7 +6,6 @@ from anndata import AnnData
 import numpy as np
 import torch
 from tqdm import tqdm
-from sklearn.decomposition import PCA
 from sklearn.metrics import pairwise_distances
 
 from scvi import REGISTRY_KEYS
@@ -18,9 +17,9 @@ from scvi.data.fields import (
 )
 from scvi.model.base import UnsupervisedTrainingMixin
 from scvi.model.base import BaseModelClass, VAEMixin
-from scvi.model._utils import _init_library_size
 
 from ._module import MrVAE
+from ._constants import MRVI_REGISTRY_KEYS
 
 logger = logging.getLogger(__name__)
 
@@ -33,13 +32,39 @@ DEFAULT_TRAIN_KWARGS = dict(
     plan_kwargs=dict(
         lr=1e-2,
         n_epochs_kl_warmup=20,
-        do_comp=False,
-        lambd=0.1,
     ),
 )
 
 
 class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
+    """
+    Multi-resolution Variational Inference (MrVI) :cite:`Boyeau2022mrvi`.
+
+    Parameters
+    ----------
+    adata
+        AnnData object that has been registered via :meth:`~scvi.model.MrVI.setup_anndata`.
+    n_latent
+        Dimensionality of the latent space.
+    n_latent_donor
+        Dimensionality of the latent space for sample embeddings.
+    uinear_decoder_zx
+        Whether to use a linear decoder for the decoder from z to x.
+    linear_decoder_uz
+        Whether to use a linear decoder for the decoder from u to z.
+    linear_decoder_uz_scaler
+        Whether to incorporate a learned scaler term in the decoder from u to z.
+    linear_decoder_uz_scaler_n_hidden
+        If `linear_decoder_uz_scaler` is True, the number of hidden
+        units in the neural network used to produce the scaler term
+        in decoder from u to z.
+    px_kwargs
+        Keyword args for :class:`~mrvi.components.DecoderZX`.
+    pz_kwargs
+        Keyword args for :class:`~mrvi.components.DecoderUZ`.
+        depending on which is used.
+    """
+
     def __init__(
         self,
         adata,
@@ -48,41 +73,35 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         super().__init__(adata)
         n_cats_per_nuisance_keys = (
             self.adata_manager.get_state_registry(
-                "categorical_nuisance_keys"
+                MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS
             ).n_cats_per_key
-            if "categorical_nuisance_keys" in self.adata_manager.data_registry
+            if MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS
+            in self.adata_manager.data_registry
             else []
         )
 
-        n_cats_per_bio_keys = (
-            self.adata_manager.get_state_registry(
-                "categorical_biological_keys"
-            ).n_cats_per_key
-            if "categorical_biological_keys" in self.adata_manager.data_registry
-            else []
-        )
-        n_batch = self.summary_stats.n_batch
-        library_log_means, library_log_vars = _init_library_size(
-            self.adata_manager, n_batch
-        )
-        n_obs_per_batch = (
+        n_sample = self.summary_stats.n_sample
+        n_obs_per_sample = (
             adata.obs.groupby(
-                self.adata_manager.get_state_registry("batch")["original_key"]
+                self.adata_manager.get_state_registry(MRVI_REGISTRY_KEYS.SAMPLE_KEY)[
+                    "original_key"
+                ]
             )
             .size()
-            .loc[self.adata_manager.get_state_registry("batch")["categorical_mapping"]]
+            .loc[
+                self.adata_manager.get_state_registry(MRVI_REGISTRY_KEYS.SAMPLE_KEY)[
+                    "categorical_mapping"
+                ]
+            ]
             .values
         )
-        n_obs_per_batch = torch.from_numpy(n_obs_per_batch).float()
+        n_obs_per_sample = torch.from_numpy(n_obs_per_sample).float()
         self.data_splitter = None
         self.module = MrVAE(
             n_input=self.summary_stats.n_vars,
-            n_batch=n_batch,
+            n_sample=n_sample,
+            n_obs_per_sample=n_obs_per_sample,
             n_cats_per_nuisance_keys=n_cats_per_nuisance_keys,
-            n_cats_per_bio_keys=n_cats_per_bio_keys,
-            library_log_means=library_log_means,
-            library_log_vars=library_log_vars,
-            n_obs_per_batch=n_obs_per_batch,
             **model_kwargs,
         )
         self.init_params_ = self._get_init_params(locals())
@@ -92,21 +111,17 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         cls,
         adata: AnnData,
         layer: Optional[str] = None,
-        batch_key: Optional[str] = None,
+        sample_key: Optional[str] = None,
         categorical_nuisance_keys: Optional[List[str]] = None,
-        categorical_biological_keys: Optional[List[str]] = None,
         **kwargs,
     ):
         setup_method_args = cls._get_setup_method_args(**locals())
         anndata_fields = [
             LayerField(REGISTRY_KEYS.X_KEY, layer, is_count_data=True),
-            CategoricalObsField(REGISTRY_KEYS.BATCH_KEY, batch_key),
+            CategoricalObsField(MRVI_REGISTRY_KEYS.SAMPLE_KEY, sample_key),
             CategoricalObsField(REGISTRY_KEYS.LABELS_KEY, None),
             CategoricalJointObsField(
-                "categorical_nuisance_keys", categorical_nuisance_keys
-            ),
-            CategoricalJointObsField(
-                "categorical_biological_keys", categorical_biological_keys
+                MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS, categorical_nuisance_keys
             ),
         ]
         adata_manager = AnnDataManager(
@@ -169,33 +184,20 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         z = torch.cat(z, 0).numpy()
         return z if give_z else u
 
-    def get_cf_degs(
-        self,
-        adata: Optional[AnnData] = None,
-        indices=None,
-        batch_size: Optional[int] = None,
-    ):
-
-        self._check_if_trained(warn=False)
-        adata = self._validate_anndata(adata)
-        scdl = self._make_data_loader(
-            adata=adata, indices=indices, batch_size=batch_size
-        )
-
-        cf_degs = []
-        for tensors in tqdm(scdl):
-            inference_inputs = self.module._get_inference_input(tensors)
-            outputs = self.module.inference(**inference_inputs)
-            cf_degs.append(outputs["cf_degs"].cpu().numpy())
-
-        cf_degs = np.concatenate(cf_degs, 0)
-        return cf_degs
-
     @staticmethod
     def compute_distance_matrix_from_representations(
         representations: np.ndarray, metric: str = "euclidean"
     ) -> np.ndarray:
-        """Compute distance matrices from representations of shape (n_cells, n_donors, n_features)"""
+        """
+        Compute distance matrices from counterfactual sample representations.
+
+        Parameters
+        ----------
+        representations
+            Counterfactual sample representations of shape (n_cells, n_sample, n_features).
+        metric
+            Metric to use for computing distance matrix.
+        """
         n_cells, n_donors, _ = representations.shape
         pairwise_dists = np.zeros((n_cells, n_donors, n_donors))
         for i, cell_rep in enumerate(representations):
@@ -209,72 +211,48 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         adata=None,
         batch_size=256,
         mc_samples: int = 10,
-        x_space=False,
-        x_log=True,
-        x_dim=50,
-        eps=1e-6,
         return_distances=False,
     ):
-        """Computes the local sample representation of the cells in the adata object.
-        For each cell, it returns a matrix of size (n_donors, n_features)
+        """
+        Computes the local sample representation of the cells in the adata object.
 
-        If ``return_distances`` is ``True``, returns a distance matrix of
-        size (n_donors, n_donors) for each cell.
+        For each cell, it returns a matrix of size (n_sample, n_features).
+
+        Parameters
+        ----------
+        adata
+            AnnData object to use for computing the local sample representation.
+        batch_size
+            Batch size to use for computing the local sample representation.
+        mc_samples
+            Number of Monte Carlo samples to use for computing the local sample representation.
+        return_distances
+            If ``return_distances`` is ``True``, returns a distance matrix of
+            size (n_sample, n_sample) for each cell.
         """
         adata = self.adata if adata is None else adata
         self._check_if_trained(warn=False)
         adata = self._validate_anndata(adata)
         scdl = self._make_data_loader(adata=adata, indices=None, batch_size=batch_size)
 
-        if x_space & (x_dim is not None):
-            hs = self.get_normalized_expression(
-                adata, batch_size=batch_size, eps=eps, x_log=x_log
-            )
-            means = np.mean(hs, axis=0)
-            stds = np.std(hs, axis=0)
-            hs = (hs - means) / stds
-            pca = PCA(n_components=x_dim).fit(hs)
-            w = torch.tensor(pca.components_, dtype=torch.float32, device=self.device).T
-            means = torch.tensor(means, dtype=torch.float32, device=self.device)
-            stds = torch.tensor(stds, dtype=torch.float32, device=self.device)
-
         reps = []
         for tensors in tqdm(scdl):
             xs = []
-            for batch in range(self.summary_stats.n_batch):
-                if x_space:
-                    tensors[
-                        "categorical_nuisance_keys"
-                    ] *= 0.0  # set to 0 all nuisance factors
-
-                    cf_batch = batch * torch.ones_like(tensors["batch"])
-                    inference_inputs = self.module._get_inference_input(tensors)
-                    inference_outputs = self.module.inference(
-                        n_samples=mc_samples, cf_batch=cf_batch, **inference_inputs
-                    )
-                    generative_inputs = self.module._get_generative_input(
-                        tensors=tensors, inference_outputs=inference_outputs
-                    )
-                    generative_outputs = self.module.generative(**generative_inputs)
-                    new = generative_outputs["h"]
-                    if x_log:
-                        new = (eps + generative_outputs["h"]).log()
-                    if x_dim is not None:
-                        new = (new - means) / stds
-                        new = new @ w
-                else:
-                    cf_batch = batch * torch.ones_like(tensors["batch"])
-                    inference_inputs = self.module._get_inference_input(tensors)
-                    inference_outputs = self.module.inference(
-                        n_samples=mc_samples, cf_batch=cf_batch, **inference_inputs
-                    )
-                    new = inference_outputs["z"]
+            for sample in range(self.summary_stats.n_sample):
+                cf_sample = sample * torch.ones_like(
+                    tensors[MRVI_REGISTRY_KEYS.SAMPLE_KEY]
+                )
+                inference_inputs = self.module._get_inference_input(tensors)
+                inference_outputs = self.module.inference(
+                    mc_samples=mc_samples, cf_sample=cf_sample, **inference_inputs
+                )
+                new = inference_outputs["z"]
 
                 xs.append(new[:, :, None])
 
             xs = torch.cat(xs, 2).mean(0)
             reps.append(xs.cpu().numpy())
-        # n_cells, n_samples, n_latent
+        # n_cells, n_sample, n_latent
         reps = np.concatenate(reps, 0)
 
         if return_distances:
