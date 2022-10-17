@@ -7,14 +7,13 @@ from mrvi import MrVI
 
 def test_mrvi():
     adata = synthetic_iid()
-    adata.obs["donor"] = np.random.choice(15, size=adata.shape[0])
-    MrVI.setup_anndata(adata, batch_key="donor", categorical_nuisance_keys=["batch"])
+    adata.obs["sample"] = np.random.choice(15, size=adata.shape[0])
+    MrVI.setup_anndata(adata, sample_key="sample", categorical_nuisance_keys=["batch"])
     for linear_decoder_uz in [True, False]:
         for linear_decoder_zx in [True, False]:
             model = MrVI(
                 adata,
-                observe_library_sizes=True,
-                n_latent_donor=5,
+                n_latent_sample=5,
                 linear_decoder_zx=linear_decoder_zx,
                 linear_decoder_uz=linear_decoder_uz,
             )
@@ -23,8 +22,7 @@ def test_mrvi():
 
     model = MrVI(
         adata,
-        observe_library_sizes=True,
-        n_latent_donor=5,
+        n_latent_sample=5,
         linear_decoder_zx=True,
         linear_decoder_uz=True,
         linear_decoder_uz_scaler=True,

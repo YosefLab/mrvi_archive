@@ -69,6 +69,7 @@ docs = [
   "typing_extensions",
   "sphinx-autodoc-typehints",
   "sphinx-rtd-theme",
+  "sphinxcontrib-bibtex",
 ]
 
 [tool.poetry.dev-dependencies]

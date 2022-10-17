@@ -17,18 +17,18 @@ import mrvi
 import anndata
 
 adata = anndata.read_h5ad("path/to/adata.h5ad")
-# batch_key represents samples (e.g., donors, perturbations, samples)
-# Sites, plates, other factors should go in categorical_nuisance_keys
-mrvi.MrVI.setup_anndata(adata, batch_key="donor", categorical_nuisance_keys=["site"])
+# Sample (e.g. donors, perturbations, etc.) should go in sample_key
+# Sites, plates, and other factors should go in categorical_nuisance_keys
+mrvi.MrVI.setup_anndata(adata, sample_key="donor", categorical_nuisance_keys=["site"])
 mrvi_model = mrvi.MrVI(adata)
 mrvi_model.train()
 # Get z representation
 adata.obsm["X_mrvi_z"] = mrvi_model.get_latent_representation(give_z=True)
 # Get u representation
 adata.obsm["X_mrvi_u"] = mrvi_model.get_latent_representation(give_z=False)
-# Cells by n_samples by n_latent
+# Cells by n_sample by n_latent
 cell_sample_representations = mrvi_model.get_local_sample_representation()
-# Cells by n_samples by n_samples
+# Cells by n_sample by n_sample
 cell_sample_sample_distances = mrvi_model.get_local_sample_representation(return_distances=True)
 ```
 
