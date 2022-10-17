@@ -48,7 +48,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         Dimensionality of the latent space.
     n_latent_donor
         Dimensionality of the latent space for sample embeddings.
-    uinear_decoder_zx
+    linear_decoder_zx
         Whether to use a linear decoder for the decoder from z to x.
     linear_decoder_uz
         Whether to use a linear decoder for the decoder from u to z.
