@@ -1,8 +1,6 @@
-import numpy as np
 import torch
 import torch.distributions as db
 import torch.nn as nn
-import torch.nn.functional as F
 from scvi import REGISTRY_KEYS
 from scvi.module.base import BaseModuleClass, LossRecorder, auto_move_data
 from scvi.nn import one_hot
@@ -166,11 +164,6 @@ class MrVAE(BaseModuleClass):
         return z
 
     def _get_generative_input(self, tensors, inference_outputs, **kwargs):
-        categorical_nuisance_keys = tensors[
-            MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS
-        ]
-        sample_index = tensors[MRVI_REGISTRY_KEYS.SAMPLE_KEY]
-
         res = dict(
             z=inference_outputs["z"],
             library=inference_outputs["library"],
