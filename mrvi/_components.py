@@ -77,7 +77,6 @@ class DecoderZX(nn.Module):
         return NegativeBinomial(mu=mu, theta=self.px_r.exp())
 
 
-# TODO (CONSOLIDATE INTO DECODER UZ)
 class LinearDecoderUZ(nn.Module):
     def __init__(
         self,
@@ -92,7 +91,6 @@ class LinearDecoderUZ(nn.Module):
         self.n_sample = n_sample
         self.n_out = n_out
 
-        # self.amat_sample = nn.Linear(self.n_latent, n_out, bias=False)
         self.amat_sample = nn.Parameter(torch.randn(n_sample, self.n_latent, n_out))
         self.offsets = nn.Parameter(torch.randn(n_sample, n_out))
 

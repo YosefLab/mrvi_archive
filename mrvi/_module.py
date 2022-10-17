@@ -66,7 +66,6 @@ class MrVAE(BaseModuleClass):
                 n_latent,
                 scaler=linear_decoder_uz_scaler,
                 scaler_n_hidden=linear_decoder_uz_scaler_n_hidden,
-                **pz_kwargs,
             )
         else:
             self.pz = DecoderUZ(
@@ -85,7 +84,9 @@ class MrVAE(BaseModuleClass):
     def _get_inference_input(self, tensors, **kwargs):
         x = tensors[REGISTRY_KEYS.X_KEY]
         sample_index = tensors[MRVI_REGISTRY_KEYS.SAMPLE_KEY]
-        categorical_nuisance_keys = tensors[MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEY]
+        categorical_nuisance_keys = tensors[
+            MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS
+        ]
         return dict(
             x=x,
             sample_index=sample_index,
@@ -172,10 +173,7 @@ class MrVAE(BaseModuleClass):
 
         res = dict(
             z=inference_outputs["z"],
-            zsample=inference_outputs["zsample"],
             library=inference_outputs["library"],
-            sample_index=sample_index,
-            categorical_nuisance_keys=categorical_nuisance_keys,
             nuisance_oh=inference_outputs["nuisance_oh"],
         )
 

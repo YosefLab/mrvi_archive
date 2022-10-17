@@ -62,7 +62,6 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         Keyword args for :class:`~mrvi.components.DecoderZX`.
     pz_kwargs
         Keyword args for :class:`~mrvi.components.DecoderUZ`.
-        depending on which is used.
     """
 
     def __init__(
@@ -176,7 +175,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         z = []
         for tensors in tqdm(scdl):
             inference_inputs = self.module._get_inference_input(tensors)
-            outputs = self.module.inference(n_samples=mc_samples, **inference_inputs)
+            outputs = self.module.inference(mc_samples=mc_samples, **inference_inputs)
             u.append(outputs["u"].mean(0).cpu())
             z.append(outputs["z"].mean(0).cpu())
 
