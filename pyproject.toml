@@ -26,7 +26,7 @@ packages = [
   {include = "mrvi"},
 ]
 readme = "README.md"
-version = "0.1.0"
+version = "0.1.1"
 
 [tool.poetry.dependencies]
 anndata = ">=0.7.5"
