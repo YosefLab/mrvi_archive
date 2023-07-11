@@ -2,7 +2,7 @@ import torch
 import torch.distributions as db
 import torch.nn as nn
 from scvi import REGISTRY_KEYS
-from scvi.module.base import BaseModuleClass, LossRecorder, auto_move_data
+from scvi.module.base import BaseModuleClass, LossOutput, auto_move_data
 from scvi.nn import one_hot
 from torch.distributions import kl_divergence as kl
 
@@ -206,9 +206,9 @@ class MrVAE(BaseModuleClass):
 
         kl_local = torch.tensor(0.0)
         kl_global = torch.tensor(0.0)
-        return LossRecorder(
-            loss,
-            reconstruction_loss,
-            kl_local,
-            kl_global,
+        return LossOutput(
+            loss = loss,
+            reconstruction_loss = reconstruction_loss,
+            kl_local = kl_local,
+            kl_global = kl_global
         )
