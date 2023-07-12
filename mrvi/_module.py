@@ -45,6 +45,8 @@ class MrVAE(BaseModuleClass):
         self.sample_embeddings = nn.Embedding(n_sample, n_latent_sample)
 
         n_nuisance = sum(self.n_cats_per_nuisance_keys)
+        if n_nuisance == 0:
+            n_nuisance = 1 # will create dummy nuisance if none are passed in
         # Generative model
         self.px = DecoderZX(
             n_latent + n_nuisance,
@@ -84,7 +86,7 @@ class MrVAE(BaseModuleClass):
         sample_index = tensors[MRVI_REGISTRY_KEYS.SAMPLE_KEY]
         categorical_nuisance_keys = tensors[
             MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS
-        ]
+        ] if MRVI_REGISTRY_KEYS.CATEGORICAL_NUISANCE_KEYS in tensors.keys() else None
         return dict(
             x=x,
             sample_index=sample_index,
@@ -109,15 +111,18 @@ class MrVAE(BaseModuleClass):
         if mc_samples >= 2:
             zsample_ = zsample[None].expand(mc_samples, *zsample.shape)
 
-        nuisance_oh = []
-        for dim in range(categorical_nuisance_keys.shape[-1]):
-            nuisance_oh.append(
-                one_hot(
-                    categorical_nuisance_keys[:, [dim]],
-                    self.n_cats_per_nuisance_keys[dim],
+        if categorical_nuisance_keys is not None:
+            nuisance_oh = []
+            for dim in range(categorical_nuisance_keys.shape[-1]):
+                nuisance_oh.append(
+                    one_hot(
+                        categorical_nuisance_keys[:, [dim]],
+                        self.n_cats_per_nuisance_keys[dim],
+                    )
                 )
-            )
-        nuisance_oh = torch.cat(nuisance_oh, dim=-1)
+            nuisance_oh = torch.cat(nuisance_oh, dim=-1)
+        else:
+            nuisance_oh = torch.zeros(x.shape[0], 1).to(x.device)
 
         x_feat = self.x_featurizer(x_)
         x_feat = self.bnn(x_feat, sample_index)
