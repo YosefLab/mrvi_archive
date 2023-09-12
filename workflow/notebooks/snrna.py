@@ -8,11 +8,9 @@ import pandas as pd
 import plotnine as p9
 import scanpy as sc
 import scipy.stats as stats
-
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
-
 
 METRIC = "euclidean"
 

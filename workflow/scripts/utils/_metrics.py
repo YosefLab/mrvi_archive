@@ -1,11 +1,11 @@
-import torch
-from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-from statsmodels.multivariate.manova import MANOVA
 import statsmodels.api as sm
+import torch
 from joblib import Parallel, delayed
+from sklearn.preprocessing import OneHotEncoder
+from statsmodels.multivariate.manova import MANOVA
 
 
 def smooth_distance(sq_dists, mask_farther_than_k=False):

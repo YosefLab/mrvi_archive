@@ -1,5 +1,5 @@
-from scvi.model import SCVI
 import scanpy as sc
+from scvi.model import SCVI
 
 from ._base_model import BaseModelClass
 
@@ -42,11 +42,7 @@ class MILO(BaseModelClass):
             batch_key = self.categorical_nuisance_keys[0]
             adata_.obs[batch_key] = adata_.obs[batch_key].astype("category")
             for batch_cat in adata_.obs[batch_key].cat.categories.tolist():
-                alldata.append(
-                    adata_[
-                        adata_.obs[batch_key] == batch_cat,
-                    ]
-                )
+                alldata.append(adata_[adata_.obs[batch_key] == batch_cat,])
 
             cdata = sc.external.pp.mnn_correct(
                 *alldata, svd_dim=50, batch_key=batch_key, n_jobs=8

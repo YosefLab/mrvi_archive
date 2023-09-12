@@ -15,7 +15,6 @@ from sklearn.metrics import pairwise_distances, precision_score, recall_score
 from statsmodels.stats.multitest import multipletests
 from tqdm import tqdm
 
-
 # %%
 workflow_dir = "../"
 base_dir = os.path.join(workflow_dir, "results/semisynthetic")
@@ -116,6 +115,8 @@ MODELS = [
     dict(model_name="CompositionSCVI", cell_specific=False),
     dict(model_name="MrVILinearLinear10", cell_specific=True),
 ]
+
+
 # %%
 def compute_aggregate_dmat(reps):
     n_cells, n_donors, _ = reps.shape

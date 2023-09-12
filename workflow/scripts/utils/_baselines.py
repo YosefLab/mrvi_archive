@@ -1,13 +1,12 @@
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
-import scanpy as sc
-from scvi.model import SCVI
-import torch
 import pynndescent
-from tqdm import tqdm
+import scanpy as sc
+import torch
 from scvi import REGISTRY_KEYS
-
+from scvi.model import SCVI
+from sklearn.decomposition import PCA
+from tqdm import tqdm
 
 from ._base_model import BaseModelClass
 

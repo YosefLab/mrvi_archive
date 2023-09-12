@@ -1,9 +1,8 @@
 import logging
 
 import torch
-import torch.nn as nn
 import torch.distributions as db
-
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,11 @@
-from mrvi import MrVI
-from ._base_model import BaseModelClass
+import numpy as np
 import pandas as pd
 import torch
-import numpy as np
 from tqdm import tqdm
+
+from mrvi import MrVI
+
+from ._base_model import BaseModelClass
 
 
 class MrVIWrapper(BaseModelClass):

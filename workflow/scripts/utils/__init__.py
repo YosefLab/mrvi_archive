@@ -1,21 +1,20 @@
-from ._mrvi import MrVIWrapper
 from ._baselines import (
+    PCAKNN,
+    CompositionBaseline,
     CTypeProportions,
     PseudoBulkPCA,
     SCVIModel,
     StatifiedPseudoBulkPCA,
-    PCAKNN,
-    CompositionBaseline,
 )
-from ._milo import MILO
-
 from ._metrics import (
+    compute_cramers,
     compute_geary,
     compute_hotspot_morans,
-    compute_cramers,
     compute_ks,
     compute_manova,
 )
+from ._milo import MILO
+from ._mrvi import MrVIWrapper
 
 __all__ = [
     "MrVIWrapper",
