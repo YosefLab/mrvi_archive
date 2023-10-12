@@ -1,25 +1,21 @@
-from copy import deepcopy
-import logging
-from typing import List, Optional, Union
+from __future__ import annotations
 
-from anndata import AnnData
+import logging
+from copy import deepcopy
+from typing import List, Optional
+
 import numpy as np
 import torch
-from tqdm import tqdm
-from sklearn.metrics import pairwise_distances
-
+from anndata import AnnData
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
-from scvi.data.fields import (
-    CategoricalJointObsField,
-    CategoricalObsField,
-    LayerField,
-)
-from scvi.model.base import UnsupervisedTrainingMixin
-from scvi.model.base import BaseModelClass, VAEMixin
+from scvi.data.fields import CategoricalJointObsField, CategoricalObsField, LayerField
+from scvi.model.base import BaseModelClass, UnsupervisedTrainingMixin, VAEMixin
+from sklearn.metrics import pairwise_distances
+from tqdm import tqdm
 
-from ._module import MrVAE
 from ._constants import MRVI_REGISTRY_KEYS
+from ._module import MrVAE
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +39,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     Parameters
     ----------
     adata
-        AnnData object that has been registered via :meth:`~scvi.model.MrVI.setup_anndata`.
+        AnnData object that has been registered via
+        :meth:`~scvi.model.MrVI.setup_anndata`.
     n_latent
         Dimensionality of the latent space.
     n_latent_donor
@@ -66,7 +63,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
     def __init__(
         self,
-        adata,
+        adata: AnnData,
         **model_kwargs,
     ):
         super().__init__(adata)
@@ -131,18 +128,20 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
     def train(
         self,
-        max_epochs: Optional[int] = None,
-        use_gpu: Optional[Union[str, int, bool]] = None,
+        max_epochs: int | None = None,
+        accelerator: str = "auto",
+        devices: int | list[int] | str = "auto",
         train_size: float = 0.9,
-        validation_size: Optional[float] = None,
+        validation_size: float | None = None,
         batch_size: int = 128,
         early_stopping: bool = False,
-        plan_kwargs: Optional[dict] = None,
+        plan_kwargs: dict | None = None,
         **trainer_kwargs,
     ):
         train_kwargs = dict(
             max_epochs=max_epochs,
-            use_gpu=use_gpu,
+            accelerator=accelerator,
+            devices=devices,
             train_size=train_size,
             validation_size=validation_size,
             batch_size=batch_size,
@@ -159,10 +158,10 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     @torch.no_grad()
     def get_latent_representation(
         self,
-        adata: Optional[AnnData] = None,
-        indices=None,
+        adata: AnnData | None = None,
+        indices: list[int] | None = None,
         mc_samples: int = 5000,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         give_z: bool = False,
     ) -> np.ndarray:
         self._check_if_trained(warn=False)
@@ -193,7 +192,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         Parameters
         ----------
         representations
-            Counterfactual sample representations of shape (n_cells, n_sample, n_features).
+            Counterfactual sample representations of shape
+            (n_cells, n_sample, n_features).
         metric
             Metric to use for computing distance matrix.
         """
@@ -207,10 +207,10 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     @torch.no_grad()
     def get_local_sample_representation(
         self,
-        adata=None,
-        batch_size=256,
+        adata: AnnData | None = None,
+        batch_size: int = 256,
         mc_samples: int = 10,
-        return_distances=False,
+        return_distances: bool = False,
     ):
         """
         Computes the local sample representation of the cells in the adata object.
@@ -224,7 +224,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         batch_size
             Batch size to use for computing the local sample representation.
         mc_samples
-            Number of Monte Carlo samples to use for computing the local sample representation.
+            Number of Monte Carlo samples to use for computing the local sample
+            representation.
         return_distances
             If ``return_distances`` is ``True``, returns a distance matrix of
             size (n_sample, n_sample) for each cell.

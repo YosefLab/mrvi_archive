@@ -1,22 +1,20 @@
 # %%
-from collections import defaultdict
 import glob
 import os
-from itertools import product
 import re
+from collections import defaultdict
+from itertools import product
 
+import ete3
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
-
-import matplotlib.pyplot as plt
 import seaborn as sns
-from tqdm import tqdm
-
-import ete3
-from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import dendrogram, linkage, to_tree
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import average_precision_score, pairwise_distances, precision_score
+from statsmodels.stats.multitest import multipletests
+from tqdm import tqdm
 
 # %%
 workflow_dir = "../"
@@ -108,6 +106,7 @@ MODELS = [
     dict(model_name="MrVILinear50COMP", cell_specific=True),
 ]
 
+
 # %%
 def compute_aggregate_dmat(reps):
     # return pairwise_distances(reps.mean(0))
@@ -165,6 +164,7 @@ dist_mtxs["GroundTruth"] = [
     dict(dist_matrix=gt_dist_mtx, cats=gt_donor_combos, seed=None, ct="CT1:1"),
     dict(dist_matrix=gt_control_dist_mtx, cats=gt_donor_combos, seed=None, ct="CT2:1"),
 ]
+
 
 # %%
 # https://stackoverflow.com/questions/9364609/converting-ndarray-generated-by-hcluster-into-a-newick-string-for-use-with-ete2/17657426#17657426
@@ -291,16 +291,9 @@ ax.set_ylabel("Model")
 ax.set_title("Robinson-Foulds Comparison to Ground Truth for Experimental Cell Type")
 fig.tight_layout()
 fig.savefig(
-    os.path.join(figure_dir, f"robinson_foulds_CT1:1_boxplot.svg"), bbox_inches="tight"
+    os.path.join(figure_dir, "robinson_foulds_CT1:1_boxplot.svg"), bbox_inches="tight"
 )
 plt.show()
-
-# %%
-from statsmodels.stats.multitest import multipletests
-from sklearn.metrics import (
-    precision_score,
-    average_precision_score,
-)
 
 
 # %%

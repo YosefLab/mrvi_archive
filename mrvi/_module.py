@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import torch
 import torch.distributions as db
 import torch.nn as nn
 from scvi import REGISTRY_KEYS
-from scvi.module.base import BaseModuleClass, LossRecorder, auto_move_data
+from scvi.module.base import BaseModuleClass, LossOutput, auto_move_data
 from scvi.nn import one_hot
 from torch.distributions import kl_divergence as kl
 
 from ._components import DecoderUZ, DecoderZX, LinearDecoderUZ
-from ._utils import ConditionalBatchNorm1d, NormalNN
 from ._constants import MRVI_REGISTRY_KEYS
+from ._utils import ConditionalBatchNorm1d, NormalNN
 
 DEFAULT_PX_HIDDEN = 32
 DEFAULT_PZ_LAYERS = 1
@@ -18,18 +20,18 @@ DEFAULT_PZ_HIDDEN = 32
 class MrVAE(BaseModuleClass):
     def __init__(
         self,
-        n_input,
-        n_sample,
-        n_obs_per_sample,
-        n_cats_per_nuisance_keys,
-        n_latent=10,
-        n_latent_sample=2,
-        linear_decoder_zx=True,
-        linear_decoder_uz=True,
-        linear_decoder_uz_scaler=False,
-        linear_decoder_uz_scaler_n_hidden=32,
-        px_kwargs=None,
-        pz_kwargs=None,
+        n_input: int,
+        n_sample: int,
+        n_obs_per_sample: int,
+        n_cats_per_nuisance_keys: list[int],
+        n_latent: int = 10,
+        n_latent_sample: int = 2,
+        linear_decoder_zx: bool = True,
+        linear_decoder_uz: bool = True,
+        linear_decoder_uz_scaler: bool = False,
+        linear_decoder_uz_scaler_n_hidden: int = 32,
+        px_kwargs: dict | None = None,
+        pz_kwargs: dict | None = None,
     ):
         super().__init__()
         px_kwargs = dict(n_hidden=DEFAULT_PX_HIDDEN)
@@ -79,7 +81,9 @@ class MrVAE(BaseModuleClass):
         self.x_featurizer2 = nn.Sequential(nn.Linear(128, 128), nn.ReLU())
         self.bnn2 = ConditionalBatchNorm1d(128, n_sample)
 
-    def _get_inference_input(self, tensors, **kwargs):
+    def _get_inference_input(
+        self, tensors: dict[str, torch.Tensor], **kwargs
+    ) -> dict[str, torch.Tensor]:
         x = tensors[REGISTRY_KEYS.X_KEY]
         sample_index = tensors[MRVI_REGISTRY_KEYS.SAMPLE_KEY]
         categorical_nuisance_keys = tensors[
@@ -94,13 +98,13 @@ class MrVAE(BaseModuleClass):
     @auto_move_data
     def inference(
         self,
-        x,
-        sample_index,
-        categorical_nuisance_keys,
-        mc_samples=1,
-        cf_sample=None,
-        use_mean=False,
-    ):
+        x: torch.Tensor,
+        sample_index: torch.Tensor,
+        categorical_nuisance_keys: torch.Tensor,
+        mc_samples: int = 1,
+        cf_sample: torch.Tensor | None = None,
+        use_mean: bool = False,
+    ) -> dict[str, torch.Tensor]:
         x_ = torch.log1p(x)
 
         sample_index_cf = sample_index if cf_sample is None else cf_sample
@@ -153,7 +157,12 @@ class MrVAE(BaseModuleClass):
             nuisance_oh=nuisance_oh,
         )
 
-    def get_z(self, u, zsample=None, sample_index=None):
+    def get_z(
+        self,
+        u: torch.Tensor,
+        zsample: torch.Tensor | None = None,
+        sample_index: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         if sample_index is not None:
             zsample = self.sample_embeddings(sample_index.long().squeeze(-1))
             zsample = zsample
@@ -163,7 +172,12 @@ class MrVAE(BaseModuleClass):
         z = self.pz(inputs)
         return z
 
-    def _get_generative_input(self, tensors, inference_outputs, **kwargs):
+    def _get_generative_input(
+        self,
+        tensors: dict[str, torch.Tensor],
+        inference_outputs: dict[str, torch.Tensor],
+        **kwargs,
+    ) -> dict[str, torch.Tensor]:
         res = dict(
             z=inference_outputs["z"],
             library=inference_outputs["library"],
@@ -175,11 +189,10 @@ class MrVAE(BaseModuleClass):
     @auto_move_data
     def generative(
         self,
-        z,
-        library,
-        nuisance_oh,
-    ):
-
+        z: torch.Tensor,
+        library: torch.Tensor,
+        nuisance_oh: torch.Tensor,
+    ) -> dict[str, torch.Tensor]:
         inputs = torch.concat([z, nuisance_oh], dim=-1)
         px = self.px(inputs, size_factor=library.exp())
         h = px.mu / library.exp()
@@ -189,12 +202,11 @@ class MrVAE(BaseModuleClass):
 
     def loss(
         self,
-        tensors,
-        inference_outputs,
-        generative_outputs,
+        tensors: dict[str, torch.Tensor],
+        inference_outputs: dict[str, torch.Tensor],
+        generative_outputs: dict[str, torch.Tensor],
         kl_weight: float = 1.0,
-    ):
-
+    ) -> LossOutput:
         reconstruction_loss = (
             -generative_outputs["px"].log_prob(tensors[REGISTRY_KEYS.X_KEY]).sum(-1)
         )
@@ -206,9 +218,10 @@ class MrVAE(BaseModuleClass):
 
         kl_local = torch.tensor(0.0)
         kl_global = torch.tensor(0.0)
-        return LossRecorder(
-            loss,
-            reconstruction_loss,
-            kl_local,
-            kl_global,
+
+        return LossOutput(
+            loss=loss,
+            reconstruction_loss=reconstruction_loss,
+            kl_local=kl_local,
+            kl_global=kl_global,
         )

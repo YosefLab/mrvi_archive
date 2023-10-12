@@ -8,11 +8,10 @@ import pandas as pd
 import plotnine as p9
 import scanpy as sc
 import scipy.stats as stats
-
+from scib.metrics import silhouette, silhouette_batch
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
-
 
 METRIC = "euclidean"
 
@@ -419,8 +418,6 @@ for model_params in MODELS:
         d_ = pairwise_distances(x, metric=METRIC)
 
 # %%
-from scib.metrics import silhouette, silhouette_batch
-
 cell_reps = [
     "MrVILinearLinear10_cell",
     "SCVI_cell",
