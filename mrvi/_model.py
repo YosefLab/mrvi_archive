@@ -17,6 +17,7 @@ from scvi.data.fields import (
 )
 from scvi.model.base import UnsupervisedTrainingMixin
 from scvi.model.base import BaseModelClass, VAEMixin
+from scvi.utils._docstrings import devices_dsp
 
 from ._module import MrVAE
 from ._constants import MRVI_REGISTRY_KEYS
@@ -129,10 +130,12 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         adata_manager.register_fields(adata, **kwargs)
         cls.register_manager(adata_manager)
 
+    @devices_dsp
     def train(
         self,
         max_epochs: Optional[int] = None,
-        use_gpu: Optional[Union[str, int, bool]] = None,
+        accelerator: str = "auto",
+        devices: int | list[int] | str = "auto",
         train_size: float = 0.9,
         validation_size: Optional[float] = None,
         batch_size: int = 128,
@@ -142,7 +145,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     ):
         train_kwargs = dict(
             max_epochs=max_epochs,
-            use_gpu=use_gpu,
+            accelerator=accelerator,
+            devices=devices,
             train_size=train_size,
             validation_size=validation_size,
             batch_size=batch_size,
