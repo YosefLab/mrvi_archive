@@ -255,7 +255,6 @@ class PCAKNN(BaseModelClass):
 
 class SCVIModel(BaseModelClass):
     has_cell_representation = True
-    has_donor_representation = False
     has_local_donor_representation = True
     has_save = True
 
