@@ -1,6 +1,6 @@
 from copy import deepcopy
 import logging
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from anndata import AnnData
 import numpy as np
@@ -43,7 +43,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     Parameters
     ----------
     adata
-        AnnData object that has been registered via :meth:`~scvi.model.MrVI.setup_anndata`.
+        AnnData object that has been registered via
+        :meth:`~scvi.model.MrVI.setup_anndata`.
     n_latent
         Dimensionality of the latent space.
     n_latent_donor
@@ -195,7 +196,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         Parameters
         ----------
         representations
-            Counterfactual sample representations of shape (n_cells, n_sample, n_features).
+            Counterfactual sample representations of shape
+            (n_cells, n_sample, n_features).
         metric
             Metric to use for computing distance matrix.
         """
@@ -226,7 +228,8 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
         batch_size
             Batch size to use for computing the local sample representation.
         mc_samples
-            Number of Monte Carlo samples to use for computing the local sample representation.
+            Number of Monte Carlo samples to use for computing the local sample
+            representation.
         return_distances
             If ``return_distances`` is ``True``, returns a distance matrix of
             size (n_sample, n_sample) for each cell.
