@@ -12,8 +12,8 @@ import pandas as pd
 import scanpy as sc
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram, linkage, to_tree
-from scipy.spatial.distance import squareform
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import average_precision_score, pairwise_distances, precision_score
+from statsmodels.stats.multitest import multipletests
 from tqdm import tqdm
 
 # %%
@@ -291,14 +291,9 @@ ax.set_ylabel("Model")
 ax.set_title("Robinson-Foulds Comparison to Ground Truth for Experimental Cell Type")
 fig.tight_layout()
 fig.savefig(
-    os.path.join(figure_dir, f"robinson_foulds_CT1:1_boxplot.svg"), bbox_inches="tight"
+    os.path.join(figure_dir, "robinson_foulds_CT1:1_boxplot.svg"), bbox_inches="tight"
 )
 plt.show()
-
-from sklearn.metrics import average_precision_score, precision_score
-
-# %%
-from statsmodels.stats.multitest import multipletests
 
 
 # %%

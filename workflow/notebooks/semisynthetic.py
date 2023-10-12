@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import plotnine as p9
 import scanpy as sc
+from scipy import stats
 from scipy.cluster.hierarchy import linkage, to_tree
 from sklearn.metrics import pairwise_distances, precision_score, recall_score
 from statsmodels.stats.multitest import multipletests
@@ -202,7 +203,7 @@ def linkage_to_ete(linkage_obj):
 # %%
 fig, ax = plt.subplots()
 im = ax.imshow(dissimilarity_mat)
-fig.savefig(os.path.join(figure_dir, f"CT B_GT_dist_matrix.svg"))
+fig.savefig(os.path.join(figure_dir, "CT B_GT_dist_matrix.svg"))
 plt.show()
 plt.close()
 # %%
@@ -305,7 +306,6 @@ for model in dist_mtxs:
 rf_df = pd.DataFrame(rf_df)
 
 # %%
-from scipy import stats
 
 for ct in [0, 1]:
     subs = rf_df.query(f"ct == '{ct}'")
@@ -441,7 +441,7 @@ fig = (
     + p9.scale_y_continuous(expand=(0, 0))
 )
 fig.save(
-    os.path.join(figure_dir, f"semisynth_TPR_comparison_synth.svg"),
+    os.path.join(figure_dir, "semisynth_TPR_comparison_synth.svg"),
 )
 fig
 
@@ -464,6 +464,6 @@ fig = (
     + p9.scale_y_continuous(expand=(0, 0))
 )
 fig.save(
-    os.path.join(figure_dir, f"semisynth_FDR_comparison_synth.svg"),
+    os.path.join(figure_dir, "semisynth_FDR_comparison_synth.svg"),
 )
 fig
