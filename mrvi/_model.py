@@ -1,25 +1,19 @@
-from copy import deepcopy
 import logging
+from copy import deepcopy
 from typing import List, Optional
 
-from anndata import AnnData
 import numpy as np
 import torch
-from tqdm import tqdm
-from sklearn.metrics import pairwise_distances
-
+from anndata import AnnData
 from scvi import REGISTRY_KEYS
 from scvi.data import AnnDataManager
-from scvi.data.fields import (
-    CategoricalJointObsField,
-    CategoricalObsField,
-    LayerField,
-)
-from scvi.model.base import UnsupervisedTrainingMixin
-from scvi.model.base import BaseModelClass, VAEMixin
+from scvi.data.fields import CategoricalJointObsField, CategoricalObsField, LayerField
+from scvi.model.base import BaseModelClass, UnsupervisedTrainingMixin, VAEMixin
+from sklearn.metrics import pairwise_distances
+from tqdm import tqdm
 
-from ._module import MrVAE
 from ._constants import MRVI_REGISTRY_KEYS
+from ._module import MrVAE
 
 logger = logging.getLogger(__name__)
 

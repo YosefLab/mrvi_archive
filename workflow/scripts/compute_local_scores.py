@@ -1,18 +1,13 @@
 import logging
 from functools import partial
 
-import scanpy as sc
 import anndata as ad
-import torch
 import numpy as np
-from tqdm import tqdm
-
 import pynndescent
-
-from utils import (
-    compute_ks,
-    compute_manova,
-)
+import scanpy as sc
+import torch
+from tqdm import tqdm
+from utils import compute_ks, compute_manova
 
 
 def compute_autocorrelation_metric(

@@ -1,17 +1,10 @@
 import logging
 import os
 
+import anndata as ad
 import numpy as np
 import scanpy as sc
-import anndata as ad
-
-from utils import (
-    PCAKNN,
-    CompositionBaseline,
-    MILO,
-    SCVIModel,
-    MrVIWrapper,
-)
+from utils import MILO, PCAKNN, CompositionBaseline, MrVIWrapper, SCVIModel
 
 profile = snakemake.config[snakemake.wildcards.dataset]
 N_EPOCHS = profile["nEpochs"]

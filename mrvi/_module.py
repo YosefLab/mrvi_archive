@@ -7,8 +7,8 @@ from scvi.nn import one_hot
 from torch.distributions import kl_divergence as kl
 
 from ._components import DecoderUZ, DecoderZX, LinearDecoderUZ
-from ._utils import ConditionalBatchNorm1d, NormalNN
 from ._constants import MRVI_REGISTRY_KEYS
+from ._utils import ConditionalBatchNorm1d, NormalNN
 
 DEFAULT_PX_HIDDEN = 32
 DEFAULT_PZ_LAYERS = 1
@@ -179,7 +179,6 @@ class MrVAE(BaseModuleClass):
         library,
         nuisance_oh,
     ):
-
         inputs = torch.concat([z, nuisance_oh], dim=-1)
         px = self.px(inputs, size_factor=library.exp())
         h = px.mu / library.exp()
@@ -194,7 +193,6 @@ class MrVAE(BaseModuleClass):
         generative_outputs,
         kl_weight: float = 1.0,
     ):
-
         reconstruction_loss = (
             -generative_outputs["px"].log_prob(tensors[REGISTRY_KEYS.X_KEY]).sum(-1)
         )
