@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from copy import deepcopy
 from typing import List, Optional
@@ -61,7 +63,7 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
     def __init__(
         self,
-        adata,
+        adata: AnnData,
         **model_kwargs,
     ):
         super().__init__(adata)
@@ -126,14 +128,14 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
 
     def train(
         self,
-        max_epochs: Optional[int] = None,
+        max_epochs: int | None = None,
         accelerator: str = "auto",
         devices: int | list[int] | str = "auto",
         train_size: float = 0.9,
-        validation_size: Optional[float] = None,
+        validation_size: float | None = None,
         batch_size: int = 128,
         early_stopping: bool = False,
-        plan_kwargs: Optional[dict] = None,
+        plan_kwargs: dict | None = None,
         **trainer_kwargs,
     ):
         train_kwargs = dict(
@@ -156,10 +158,10 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     @torch.no_grad()
     def get_latent_representation(
         self,
-        adata: Optional[AnnData] = None,
-        indices=None,
+        adata: AnnData | None = None,
+        indices: list[int] | None = None,
         mc_samples: int = 5000,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         give_z: bool = False,
     ) -> np.ndarray:
         self._check_if_trained(warn=False)
@@ -205,10 +207,10 @@ class MrVI(UnsupervisedTrainingMixin, VAEMixin, BaseModelClass):
     @torch.no_grad()
     def get_local_sample_representation(
         self,
-        adata=None,
-        batch_size=256,
+        adata: AnnData | None = None,
+        batch_size: int = 256,
         mc_samples: int = 10,
-        return_distances=False,
+        return_distances: bool = False,
     ):
         """
         Computes the local sample representation of the cells in the adata object.
