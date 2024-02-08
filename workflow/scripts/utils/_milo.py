@@ -61,9 +61,11 @@ class MILO(BaseModelClass):
             SCVI.setup_anndata(
                 adata_,
                 batch_key=batch_key,
-                categorical_covariate_keys=self.categorical_nuisance_keys[1:]
-                if len(self.categorical_nuisance_keys) > 1
-                else None,
+                categorical_covariate_keys=(
+                    self.categorical_nuisance_keys[1:]
+                    if len(self.categorical_nuisance_keys) > 1
+                    else None
+                ),
             )
             self.adata_ = adata_
             scvi_model = SCVI(adata_, **self.model_kwargs)
