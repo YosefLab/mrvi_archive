@@ -1,5 +1,7 @@
 # Multi-resolution Variational Inference
 
+**DEPRECIATED: please refer to the current [version](https://github.com/YosefLab/mrvi) of the project for up-to-date code**
+
 Multi-resolution Variational Inference (MrVI) is a package for analysis of sample-level heterogeneity in multi-site, multi-sample single-cell omics data. Built with [scvi-tools](https://scvi-tools.org).
 
 ---
