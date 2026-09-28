@@ -14,7 +14,6 @@ sys.path[:0] = [str(HERE.parent), str(HERE / "extensions")]
 
 import mrvi  # noqa
 
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
